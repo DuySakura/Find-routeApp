@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title></title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" />
+  <style>#map { height: 500px; }</style>
+</head>
+<body>
+  <div id="map"></div>
+
+  <hr style="margin: 10px 0; border: none" />
+
+  <div style="width: fit-content; margin: 0 auto; text-align: center;">
+    <div style="display: flex; gap: 50px; justify-content: center;">
+        <input style="width: 200px" type="text" id="placeInput1" placeholder="Nhập điểm xuất phát" />
+        <input style="width: 200px" type="text" id="placeInput2" placeholder="Nhập điểm đến" />
+    </div>
+    
+    <hr style="margin: 10px 0; border: none" />
+
+    <button style="width: 100px; display: block; margin: 0 auto;" onclick="findRoute()">Tìm</button>
+    </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
+  <script>
+    var map = L.map('map').setView([21.038235, 105.826213], 15);
+    var points = [];
+    var markers = [];
+    var polyline;
+
+    //Tạo bản đồ
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+
+    //Tạo đường bao
+    fetch('/boundary')
+    .then(res => res.json())
+    .then(coords => {
+      const polygon = L.polygon(coords, {
+        color: 'green',
+        weight: 2,
+        fillOpacity: 0.2
+      }).addTo(map);
+      map.fitBounds(polygon.getBounds());
+    })
+    .catch(err => {
+      console.error("Lỗi khi lấy đường bao:", err);
+    });
+
+    //Tạo sự kiện click
+    map.on('click', function(e) {
+      //Reset
+      if (points.length >= 2) {
+        points = [];
+        markers.forEach(m => map.removeLayer(m));
+        if (polyline) map.removeLayer(polyline);
+        markers = [];
+      }
+
+      const latlng = e.latlng;
+      points.push(latlng);
+
+      //Xác định điểm xuất phát
+      if (points.length == 1) {
+        const marker = L.marker(latlng).addTo(map).bindPopup('Điểm xuất phát').openPopup();
+        markers.push(marker);
+      } 
+      //Xác định điểm đến
+      else {
+        const marker = L.marker(latlng).addTo(map).bindPopup('Điểm đến').openPopup();
+        markers.push(marker);
+      }
+
+      if (points.length === 2) {
+        //Gửi dữ liệu về backend
+        fetch('/find-route-by-click', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({
+            point1: {lat: points[0].lat, lng: points[0].lng},
+            point2: {lat: points[1].lat, lng: points[1].lng}
+          })
+        })
+        //Nhận lại dữ liệu từ backend
+        .then(res => res.json())
+        .then(coords => {
+          //Vẽ đường đi nếu tìm được, không thì báo lỗi
+          if (coords.length > 0) {
+            polyline = L.polyline(coords, { color: 'blue' }).addTo(map);
+            map.fitBounds(polyline.getBounds());
+          } else {
+            alert(coords.error);
+          }
+        })
+        .catch(err => console.error(err));
+      }
+    });
+
+    //Hàm xử lý dữ liệu khi xảy ra sự kiện bấm nút
+    function findRoute() {
+      //Lấy dữ liệu từ text box
+      const start = document.getElementById("placeInput1").value;
+      const end = document.getElementById("placeInput2").value;
+
+      //Gửi dữ liệu về backend
+      fetch('/find-route-by-text', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+          place1: start,
+          place2: end
+        })
+      })
+      //Nhận lại dữ liệu từ backend
+      .then(res => res.json())
+      .then(coords => {
+        //Vẽ đường đi và đánh dấu điểm xuất phát, điểm đích nếu tìm được, không thì báo lỗi
+        if (coords.length > 0) {
+          //Reset
+          if (polyline) map.removeLayer(polyline);
+          if (markers) {
+            markers.forEach(m => map.removeLayer(m));
+            markers = [];
+          }
+          start_marker = L.marker(coords[0]).addTo(map).bindPopup('Điểm xuất phát').openPopup();
+          end_marker = L.marker(coords[coords.length-1]).addTo(map).bindPopup('Điểm đích').openPopup();
+          markers.push(start_marker, end_marker);
+          polyline = L.polyline(coords, { color: 'blue' }).addTo(map);
+          map.fitBounds(polyline.getBounds());
+        } else {
+          alert(coords.error);
+        }
+      })
+      .catch(err => console.error(err));
+    }
+  </script>
+</body>
+</html>
