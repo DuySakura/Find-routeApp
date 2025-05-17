@@ -137,7 +137,7 @@ def change_weight():
             speed_min = 40
 
             #Kiểm tra xem cạnh đang xét có phải là đường mà người dùng nhập vào không
-            if (isinstance(data['name'], list) and street_name in data['name']) or street_name in data['name']:
+            if (isinstance(data['name'], list) and street_name in data['name']) or street_name == data['name']:
                 if isinstance(data['highway'], list):
                     for i in data['highway']:
                         if street_speed[i] < speed_min:
@@ -173,7 +173,7 @@ def ban_route():
                     
         #Xóa tất cả các cạnh có thuộc tính 'name' là tên đường mà người dùng nhập vào
         for u, v, key in edge_to_remove:
-            G.remove_edge(u, v, key=key)
+            G.remove_edge(u, v, key)
         return {"message": "Đã cấm đường"}
     except Exception as e:
         return {"error": str(e)}
