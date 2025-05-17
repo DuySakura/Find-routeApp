@@ -14,6 +14,10 @@ street_speed = {'secondary': 40, 'tertiary': 30, 'residential': 20, 'service': 1
 #Thay đổi thuộc tính 'length' của các cạnh trong đồ thị thành thời gian di chuyển
 for u, v, key, data in G.edges(keys=True, data=True):
     speed_min = 40
+
+    #Kiểm tra xem thuộc tính 'highway' có phải là list không
+    #Nếu có thì lấy tốc độ nhỏ nhất của các loại đường trong list
+    #Nếu không thì lấy tốc độ của loại đường đó
     if isinstance(data['highway'], list):
         for i in data['highway']:
             if street_speed[i] < speed_min:
@@ -124,18 +128,25 @@ def change_weight():
         data = request.get_json()
         street_name = data['street']
         level = float(data['level'])
-        speed_min = 40
+
         for u, v, key, data in G.edges(keys=True, data=True):
+            #Kiểm tra xem có thuộc tính 'name' không, nếu không có thì bỏ qua
             if 'name' not in data:
                 continue
-            if  (isinstance(data['name'], list) and street_name in data['name']) or street_name in data['name']:
+
+            speed_min = 40
+
+            #Kiểm tra xem cạnh đang xét có phải là đường mà người dùng nhập vào không
+            if (isinstance(data['name'], list) and street_name in data['name']) or street_name in data['name']:
                 if isinstance(data['highway'], list):
                     for i in data['highway']:
                         if street_speed[i] < speed_min:
                             speed_min = street_speed[i]
                 else:
                     speed_min = street_speed[data['highway']]
-        data['length'] = (G_original.edges[u, v, key]['length'] * speed_min) / (speed_min * (1 - level * 0.25))
+
+            #Cập nhật lại trọng số của các cạnh trong đồ thị
+            data['length'] = (G_original.edges[u, v, key]['length'] * speed_min) / (speed_min * (1 - level * 0.25))
         return {"message": "Trọng số đã được thay đổi"}
     except Exception as e:
         return {"error": str(e)}
@@ -149,6 +160,7 @@ def ban_route():
         street_name = data['street']
         edge_to_remove = []
 
+        #Tìm tất cả các cạnh có thuộc tính 'name' là tên đường mà người dùng nhập vào
         for u, v, key, data in G.edges(keys=True, data=True):
             if 'name' not in data:
                 continue
@@ -159,6 +171,7 @@ def ban_route():
                 if street_name == data['name']:
                     edge_to_remove.append((u, v, key))
                     
+        #Xóa tất cả các cạnh có thuộc tính 'name' là tên đường mà người dùng nhập vào
         for u, v, key in edge_to_remove:
             G.remove_edge(u, v, key=key)
         return {"message": "Đã cấm đường"}
