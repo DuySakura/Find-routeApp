@@ -8,7 +8,6 @@ app = Flask(__name__)
 place_name = "Ngọc Hà, Ba Đình, Hà Nội, Vietnam"
 G = ox.graph_from_place(place_name)
 G_compared = ox.graph_from_place(["Ba Đình, Hà Nội, Vietnam", "Liễu Giai, Hà Nội, Vietnam", "Quán Thánh, Hà Nội, Vietnam", "Điện Biên, Hà Nội, Vietnam", "Đội Cấn, Hà Nội, Việt Nam", "Thụy Khuê, Tây Hồ, Hà Nội, Vietnam"])
-G_original = G.copy()
 street_speed = {'secondary': 40, 'tertiary': 30, 'residential': 20, 'service': 10, 'steps' : 5, 'path' : 5, 'footway' : 5}
 
 
@@ -22,6 +21,10 @@ for u, v, key, data in G.edges(keys=True, data=True):
     else: 
         speed_min = street_speed[data['highway']]
     data['length'] /= speed_min
+
+
+#Lưu lại đồ thị ban đầu để khôi phục lại sau này
+G_original = G.copy()
 
 
 def find_route(start_point, end_point):
@@ -132,7 +135,7 @@ def change_weight():
                             speed_min = street_speed[i]
                 else:
                     speed_min = street_speed[data['highway']]
-        data['length'] = G_original.edges[u, v, key]['length'] / (speed_min * (1 - level * 0.25))
+        data['length'] = (G_original.edges[u, v, key]['length'] * speed_min) / (speed_min * (1 - level * 0.25))
         return {"message": "Trọng số đã được thay đổi"}
     except Exception as e:
         return {"error": str(e)}
