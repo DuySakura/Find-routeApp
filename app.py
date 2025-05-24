@@ -128,6 +128,7 @@ def change_weight():
         data = request.get_json()
         street_name = data['street']
         level = float(data['level'])
+        exist = False
 
         for u, v, key, data in G.edges(keys=True, data=True):
             #Kiểm tra xem có thuộc tính 'name' không, nếu không có thì bỏ qua
@@ -138,6 +139,7 @@ def change_weight():
 
             #Kiểm tra xem cạnh đang xét có phải là đường mà người dùng nhập vào không
             if (isinstance(data['name'], list) and street_name in data['name']) or street_name == data['name']:
+                exist = True
                 if isinstance(data['highway'], list):
                     for i in data['highway']:
                         if street_speed[i] < speed_min:
@@ -147,7 +149,11 @@ def change_weight():
 
             #Cập nhật lại trọng số của các cạnh trong đồ thị
             data['length'] = (G_original.edges[u, v, key]['length'] * speed_min) / (speed_min * (1 - level * 0.25))
-        return {"message": "Trọng số đã được thay đổi"}
+
+        #Kiểm tra xem có tồn tại đường mà người dùng nhập vào không
+        if exist:
+            return {"message": "Trọng số đã được thay đổi"}
+        return {"message": f"Không tồn tại đường \"{street_name}\" trong khu vực, hoặc đường này đã bị cấm, hoặc bạn nhập không đúng định dạng"}
     except Exception as e:
         return {"error": str(e)}
 
@@ -164,13 +170,13 @@ def ban_route():
         for u, v, key, data in G.edges(keys=True, data=True):
             if 'name' not in data:
                 continue
-            if  isinstance(data['name'], list):
-                if street_name in data['name']:
-                    edge_to_remove.append((u, v, key))
-            else:
-                if street_name == data['name']:
-                    edge_to_remove.append((u, v, key))
-                    
+            if (isinstance(data['name'], list) and street_name in data['name']) or street_name == data['name']:
+                edge_to_remove.append((u, v, key))
+        
+        #Kiểm tra xem có tồn tại đường mà người dùng nhập vào không
+        if edge_to_remove == []:
+            return {"message": f"Không tồn tại đường \"{street_name}\" trong khu vực, hoặc đường này đã bị cấm, hoặc bạn nhập không đúng định dạng"}
+        
         #Xóa tất cả các cạnh có thuộc tính 'name' là tên đường mà người dùng nhập vào
         for u, v, key in edge_to_remove:
             G.remove_edge(u, v, key)
