@@ -1,6 +1,7 @@
 let map = L.map('map').setView([21.038235, 105.826213], 15);
 let points = [];
 let markers = [];
+let ban_routes = [];
 let polyline;
 
 
@@ -28,10 +29,10 @@ fetch('/boundary')
 map.on('click', function(e) {
     //Reset
     if (points.length >= 2) {
-    points = [];
-    markers.forEach(m => map.removeLayer(m));
-    if (polyline) map.removeLayer(polyline);
-    markers = [];
+        points = [];
+        markers.forEach(m => map.removeLayer(m));
+        if (polyline) map.removeLayer(polyline);
+        markers = [];
     }
 
     const latlng = e.latlng;
@@ -39,13 +40,13 @@ map.on('click', function(e) {
 
     //Xác định điểm xuất phát
     if (points.length == 1) {
-    const marker = L.marker(latlng).addTo(map).bindPopup('Điểm xuất phát').openPopup();
-    markers.push(marker);
+        const marker = L.marker(latlng).addTo(map).bindPopup('Điểm xuất phát').openPopup();
+        markers.push(marker);
     } 
     //Xác định điểm đến
     else {
-    const marker = L.marker(latlng).addTo(map).bindPopup('Điểm đến').openPopup();
-    markers.push(marker);
+        const marker = L.marker(latlng).addTo(map).bindPopup('Điểm đến').openPopup();
+        markers.push(marker);
     }
 
     if (points.length === 2) {
@@ -63,10 +64,10 @@ map.on('click', function(e) {
     .then(coords => {
         //Vẽ đường đi nếu tìm được, không thì báo lỗi
         if (coords.length > 0) {
-        polyline = L.polyline(coords, { color: 'blue' }).addTo(map);
-        map.fitBounds(polyline.getBounds());
+            polyline = L.polyline(coords, { color: 'blue' }).addTo(map);
+            map.fitBounds(polyline.getBounds());
         } else {
-        alert(coords.error);
+            alert(coords.error);
         }
     })
     .catch(err => console.error(err));
@@ -97,11 +98,11 @@ function findRoute() {
         //Reset
         if (polyline) map.removeLayer(polyline);
         if (markers) {
-        markers.forEach(m => map.removeLayer(m));
-        markers = [];
+            markers.forEach(m => map.removeLayer(m));
+            markers = [];
         }
-        start_marker = L.marker(coords[0]).addTo(map).bindPopup('Điểm xuất phát').openPopup();
-        end_marker = L.marker(coords[coords.length-1]).addTo(map).bindPopup('Điểm đích').openPopup();
+        const start_marker = L.marker(coords[0]).addTo(map).bindPopup('Điểm xuất phát').openPopup();
+        const end_marker = L.marker(coords[coords.length-1]).addTo(map).bindPopup('Điểm đích').openPopup();
         markers.push(start_marker, end_marker);
         polyline = L.polyline(coords, { color: 'blue' }).addTo(map);
         map.fitBounds(polyline.getBounds());
@@ -137,7 +138,15 @@ function changeWeight() {
             body: JSON.stringify({street: street})
         })
         .then(res => res.json())
-        .then(data => alert(data.message))
+        .then(data => {
+            alert(data.message);
+            if (data.routes) {
+                data.routes.forEach(line => {
+                    const ban_route = L.polyline(line, { color: 'red', weight: 1, dashArray: '5, 10' }).addTo(map);
+                    ban_routes.push(ban_route);
+                })
+            }
+        })
         .catch(err => console.error(err));
     }
 }
@@ -145,6 +154,9 @@ function changeWeight() {
 
 //Hàm xử lý sự kiện bấm nút "Reset"
 function resetGraph() {
+    ban_routes.forEach(line => map.removeLayer(line));
+    ban_routes = [];
+
     fetch('/reset', {method: 'POST'})
     .then(res => res.json())
     .then(data => alert(data.message))
@@ -155,10 +167,10 @@ function resetGraph() {
 
 //Ẩn/Hiện sidebar
 function toggleSidebar() {
-  const sidebar = document.getElementById('sidebar');
-  const main = document.getElementById('main');
-  sidebar.classList.toggle('hidden');
-  main.classList.toggle('full');
+    const sidebar = document.getElementById('sidebar');
+    const main = document.getElementById('main');
+    sidebar.classList.toggle('hidden');
+    main.classList.toggle('full');
 }
 
 
@@ -167,5 +179,5 @@ const levelSlider = document.getElementById('level');
 const levelValue = document.getElementById('levelValue');
 
 levelSlider.addEventListener('input', function () {
-  levelValue.textContent = levelSlider.value;
+    levelValue.textContent = levelSlider.value;
 });

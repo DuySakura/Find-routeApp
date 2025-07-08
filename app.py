@@ -91,6 +91,7 @@ def find_route_by_click():
         end_point = data['point2']
 
         return find_route(start_point, end_point)
+    
     except Exception as e:
         return {"error": str(e)}
 
@@ -130,6 +131,7 @@ def find_route_by_text():
             return {"error": "Điểm đích không hợp lệ"}
 
         return find_route(start_point, end_point)
+    
     except Exception as e:
         return {"error": str(e)}
 
@@ -167,6 +169,7 @@ def change_weight():
         if exist:
             return {"message": "Trọng số đã được thay đổi"}
         return {"message": f"Không tồn tại đường \"{street_name}\" trong khu vực, hoặc đường này đã bị cấm"}
+    
     except Exception as e:
         return {"error": str(e)}
 
@@ -178,6 +181,7 @@ def ban_route():
         data = request.get_json()
         street_name = data['street']
         edge_to_remove = []
+        routes = []
 
         #Tìm tất cả các cạnh có thuộc tính 'name' là tên đường mà người dùng nhập vào
         for u, v, key, data in G.edges(keys=True, data=True):
@@ -192,8 +196,11 @@ def ban_route():
 
         #Xóa tất cả các cạnh có thuộc tính 'name' là tên đường mà người dùng nhập vào
         for u, v, key in edge_to_remove:
+            routes.append([[G.nodes[u]['y'], G.nodes[u]['x']], [G.nodes[v]['y'], G.nodes[v]['x']]])
             G.remove_edge(u, v, key)
-        return {"message": "Đã cấm đường"}
+
+        return {"message": "Đã cấm đường", "routes": routes}
+
     except Exception as e:
         return {"error": str(e)}
 
@@ -204,6 +211,7 @@ def reset():
         global G
         G = G_original.copy()
         return {"message": "Đã khôi phục lại đồ thị ban đầu"}
+    
     except Exception as e:
         return {"error": str(e)}
 
