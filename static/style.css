@@ -1,7 +1,7 @@
 #sidebar {
   position: fixed;
   top: 0;
-  left: 0;
+  left: -250px;
   width: 250px;
   height: 100%;
   background: #333;
@@ -13,16 +13,16 @@
   z-index: 1000;
 }
 
-#sidebar.hidden {
-  transform: translateX(-100%);
+#sidebar.appear {
+  transform: translateX(100%);
 }
 
 #main {
-  margin-left: 250px;
+  margin-left: 0;
   padding: 20px;
   transition: margin-left 0.3s ease;
 }
 
-#main.full {
-  margin-left: 0;
+#main.minimize {
+  margin-left: 250px;
 }
