@@ -5,6 +5,7 @@
 ## Tổng Quan Dự Án
 
 - Ứng dụng được xây dựng bằng Flask, OSMnx (backend) và Leaflet (Frontend)
+- Hỗ trợ tìm kiếm bằng cách click 2 địa điểm trên bản đồ hoặc nhập địa chỉ của 2 địa điểm
 - Đường đi tối ưu được tìm kiếm bằng thuật toán Dijkstra
 
 ## Cấu Trúc Thư Mục
