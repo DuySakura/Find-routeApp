@@ -24,7 +24,7 @@
 
 1. Clone repository:
 ```bash
-git clone https://github.com/DuySakura/Project-IntroAI.git
+git clone https://github.com/DuySakura/Find-routeApp.git
 ```
 2. Cài đặt các thư viện cần thiết:
 ```bash
@@ -32,6 +32,8 @@ pip install -r requirements.txt
 ```
 3. Chạy server:
 ```bash
-cd Project-IntroAI
+cd Find-routeApp
 python -u app.py
 ```
+
+test
